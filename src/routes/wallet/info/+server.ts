@@ -5,14 +5,14 @@ import type { WalletData } from '$root/types/api';
 import { caver } from '$root/lib/caver';
 
 export const POST: RequestHandler = async ({ request }) => {
-	const { klaytnContractAddr, klaytnWalletAddr } = await request.json();
+	const { klaytnCaAddress, klaytnEoaAddress } = await request.json();
 
 	try {
-		const kip17 = await caver.kct.kip17.create(klaytnContractAddr);
+		const kip17 = await caver.kct.kip17.create(klaytnCaAddress);
 
 		const name = await kip17.name();
 		const symbol = await kip17.symbol();
-		const balance = Number(await kip17.balanceOf(klaytnWalletAddr));
+		const balance = Number(await kip17.balanceOf(klaytnEoaAddress));
 		const totalSupply = Number(await kip17.totalSupply());
 
 		const walletData: WalletData = { name, symbol, balance, totalSupply };

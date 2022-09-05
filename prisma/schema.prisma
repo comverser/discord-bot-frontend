@@ -1,0 +1,18 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = ["native"]
+}
+
+model discord_user {
+    id               String   @id @default(uuid())
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt
+    discordUserId    String   @unique
+    klaytnEoaAddress String   @unique
+    role             String
+}

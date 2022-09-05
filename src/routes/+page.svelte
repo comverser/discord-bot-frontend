@@ -4,7 +4,6 @@
 
 	import type { ApiError, WalletData } from '$root/types/api';
 	import { connectWallet, getWalletInfo, signWallet, validateSign } from '$root/utils/wallet';
-	import { addDiscordRole } from '$root/utils/role';
 
 	let hasCheckedBalance = false;
 	let hasBalance = false;
@@ -14,9 +13,10 @@
 
 	let discordOauth2Error: ApiError | null = null;
 	let kasPublicNodeError: ApiError | null = null;
+	let roleError: ApiError | null = null;
 
 	let kaikasProvider: any = null;
-	let klaytnWalletAddr: string | null = null;
+	let klaytnEoaAddress: string | null = null;
 
 	const KLAYTN_CAP_NFT_ENTER = import.meta.env.VITE_KLAYTN_CAP_NFT_ENTER;
 	const KLAYTN_CAP_NFT_ENTER_LP = import.meta.env.VITE_KLAYTN_CAP_NFT_ENTER_LP;
@@ -27,9 +27,10 @@
 		console.error(data.errorDescription);
 		discordOauth2Error = data;
 	}
-	const discordUserId = data.id;
+	const discordUserId: string = data.id;
 
 	const resetStatusParam = () => {
+		hasCheckedBalance = false;
 		hasBalance = false;
 		hasValidated = false;
 		hasRefused = false;
@@ -45,16 +46,16 @@
 
 		try {
 			// Connect to wallet
-			klaytnWalletAddr = await connectWallet(kaikasProvider);
+			klaytnEoaAddress = await connectWallet(kaikasProvider);
 
 			// Get wallet information
 			const walletDataEnter: WalletData | undefined = await getWalletInfo(
 				KLAYTN_CAP_NFT_ENTER,
-				klaytnWalletAddr
+				klaytnEoaAddress
 			);
 			const walletDataEnterLp: WalletData | undefined = await getWalletInfo(
 				KLAYTN_CAP_NFT_ENTER_LP,
-				klaytnWalletAddr
+				klaytnEoaAddress
 			);
 
 			// Check balance
@@ -78,8 +79,8 @@
 		while (!hasValidated) {
 			try {
 				const message = 'Mesher CAP NFT holder';
-				const signature = await signWallet(klaytnWalletAddr, message);
-				hasValidated = await validateSign(message, signature, klaytnWalletAddr);
+				const signature = await signWallet(klaytnEoaAddress, message);
+				hasValidated = await validateSign(message, signature, klaytnEoaAddress);
 				console.debug('hasValidated:', hasValidated);
 			} catch (err) {
 				console.log(err.message);
@@ -94,15 +95,17 @@
 		// Check again
 		if (!hasValidated || !hasBalance) return;
 
-		// Add new role of Discord
-		try {
-			let errors;
-			({ hasAdded, errors } = await addDiscordRole(discordUserId));
+		// Add role
+		const dto = { discordUserId, klaytnEoaAddress };
+		const response = await fetch('/role', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(dto)
+		});
 
-			if (errors) throw new Error(errors.message);
-		} catch (err) {
-			throw new Error(err.message);
-		}
+		({ roleError } = await response.json());
+
+		if (!roleError) hasAdded = true;
 	};
 
 	onMount(async () => {
@@ -124,7 +127,7 @@
 {/if}
 
 <main>
-	{#if klaytnWalletAddr === null}
+	{#if klaytnEoaAddress === null}
 		<div
 			class="container"
 			in:fly={{ y: 150, duration: 200, delay: 200 }}
@@ -179,8 +182,12 @@
 			in:fly={{ y: 150, duration: 200, delay: 200 }}
 			out:fly={{ y: -150, duration: 200 }}
 		>
-			<p>홀더 검증을 완료하였습니다</p>
-			<p>메셔 디스코드 서버 권한 향상 중...</p>
+			{#if !roleError}
+				<p>홀더 검증을 완료하였습니다</p>
+				<p>메셔 디스코드 서버 권한 향상 중...</p>
+			{:else}
+				<p>{roleError.errorDescription}</p>
+			{/if}
 		</div>
 	{:else if hasAdded}
 		<div

@@ -4,13 +4,13 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { caver } from '$root/lib/caver';
 
 export const POST: RequestHandler = async ({ request }) => {
-	const { signature, message, klaytnWalletAddr } = await request.json();
+	const { signature, message, klaytnEoaAddress } = await request.json();
 
 	try {
 		const hasValidated = await caver.validator.validateSignedMessage(
 			message,
 			signature,
-			klaytnWalletAddr
+			klaytnEoaAddress
 		);
 
 		return new Response(JSON.stringify({ hasValidated }), {

@@ -25,15 +25,15 @@ export const connectWallet = async (kaikasProvider: any): Promise<string> => {
 };
 
 export const getWalletInfo = async (
-	klaytnContractAddr: string,
-	klaytnWalletAddr: string
+	klaytnCaAddress: string,
+	klaytnEoaAddress: string
 ): Promise<WalletData | undefined> => {
 	try {
 		const url = '/wallet/info';
 		const walletResponse = await fetch(url, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ klaytnContractAddr, klaytnWalletAddr })
+			body: JSON.stringify({ klaytnCaAddress, klaytnEoaAddress })
 		});
 
 		return await walletResponse.json();
@@ -42,12 +42,12 @@ export const getWalletInfo = async (
 	}
 };
 
-export const signWallet = async (klaytnWalletAddr: string, message: string) => {
+export const signWallet = async (klaytnEoaAddress: string, message: string) => {
 	try {
 		const Caver = (window as any).Caver;
 		const caver = new Caver((window as any).klaytn);
 
-		const signedMessage = await caver.rpc.klay.sign(klaytnWalletAddr, message);
+		const signedMessage = await caver.rpc.klay.sign(klaytnEoaAddress, message);
 		const v = `0x` + signedMessage.substring(2).substring(128, 130);
 		const r = `0x` + signedMessage.substring(2).substring(0, 64);
 		const s = `0x` + signedMessage.substring(2).substring(64, 128);
@@ -61,14 +61,14 @@ export const signWallet = async (klaytnWalletAddr: string, message: string) => {
 export const validateSign = async (
 	message: string,
 	signature: string[],
-	klaytnWalletAddr: string
+	klaytnEoaAddress: string
 ): Promise<boolean> => {
 	try {
 		const url = '/wallet/validate-sign';
 		const walletResponse = await fetch(url, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ message, signature, klaytnWalletAddr })
+			body: JSON.stringify({ message, signature, klaytnEoaAddress })
 		});
 
 		return await walletResponse.json();
