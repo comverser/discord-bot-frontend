@@ -129,7 +129,7 @@
 			{#if klipRequestKey}
 				<QrCode codeValue={`https://klipwallet.com/?target=/a2a?request_key=${klipRequestKey}`} />
 			{/if}
-			<p>5분 내 QR 코드를 스캔해주세요</p>
+			<p>QR 코드를 스캔해주세요</p>
 		</div>
 	{:else if !hasCheckedBalance}
 		<div
@@ -180,7 +180,7 @@
 			{#if !roleError}
 				<p>홀더 검증을 완료하였습니다</p>
 				<p>메셔 디스코드 서버 권한 향상 중...</p>
-				<p>아직 창을 닫지 말아주세요 (3분 이하 소요)</p>
+				<p>아직 창을 닫지 말아주세요</p>
 			{:else}
 				<p>{roleError.errorDescription}</p>
 			{/if}
