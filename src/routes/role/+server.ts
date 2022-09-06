@@ -69,7 +69,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		body: JSON.stringify({ discordUserId, MESHER_TOKEN })
 	});
 
-	const hasAdded = await botClientResponse.json();
+	const { hasAdded, errors } = await botClientResponse.json();
+
+	if (errors) console.debug(errors);
 
 	if (!hasAdded) {
 		roleError = {
