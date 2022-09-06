@@ -9,7 +9,7 @@ export const connectKlip = async (): Promise<string | null> => {
 
 	if (result.err || !result.request_key) return null;
 
-	return result.request_key;
+	return result.request_key.toLowerCase();
 };
 
 export const getKlipAddress = async (klipRequestKey: string): Promise<string> => {

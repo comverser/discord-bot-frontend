@@ -15,7 +15,7 @@ export const connectKaikas = async (kaikasProvider: any): Promise<string> => {
 			console.warn('Account selected is undefined, first account is selected arbitrarily');
 			return accounts[0];
 		}
-		return kaikasProvider.selectedAddress;
+		return kaikasProvider.selectedAddress.toLowerCase();
 	} catch (err: any) {
 		handleError(err);
 		throw error(400, `Failed to connect wallet: ${err.message}`);
