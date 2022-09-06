@@ -1,14 +1,12 @@
 import { error } from '@sveltejs/kit';
 
-import type { WalletData } from '$root/types/api';
-
 const handleError = (err: any) => {
 	if (err.code === -32603) {
 		throw error(400, `User denied: ${err.message}`);
 	}
 };
 
-export const connectWallet = async (kaikasProvider: any): Promise<string> => {
+export const connectKaikas = async (kaikasProvider: any): Promise<string> => {
 	try {
 		const accounts = await kaikasProvider.enable();
 		// You now have an array of accounts!
@@ -24,25 +22,7 @@ export const connectWallet = async (kaikasProvider: any): Promise<string> => {
 	}
 };
 
-export const getWalletInfo = async (
-	klaytnCaAddress: string,
-	klaytnEoaAddress: string
-): Promise<WalletData | undefined> => {
-	try {
-		const url = '/wallet/info';
-		const walletResponse = await fetch(url, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ klaytnCaAddress, klaytnEoaAddress })
-		});
-
-		return await walletResponse.json();
-	} catch (err: any) {
-		throw error(400, `Failed to get wallet info: ${err.message}`);
-	}
-};
-
-export const signWallet = async (klaytnEoaAddress: string, message: string) => {
+const signKaikas = async (klaytnEoaAddress: string, message: string) => {
 	try {
 		const Caver = (window as any).Caver;
 		const caver = new Caver((window as any).klaytn);
@@ -58,13 +38,13 @@ export const signWallet = async (klaytnEoaAddress: string, message: string) => {
 	}
 };
 
-export const validateSign = async (
+const validateKaikasSign = async (
 	message: string,
 	signature: string[],
 	klaytnEoaAddress: string
 ): Promise<boolean> => {
 	try {
-		const url = '/wallet/validate-sign';
+		const url = '/wallet/validate-kaikas-sign';
 		const walletResponse = await fetch(url, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -75,4 +55,10 @@ export const validateSign = async (
 	} catch (err: any) {
 		throw error(400, `Failed to validate signature: ${err.message}`);
 	}
+};
+
+export const validateKaikas = async (klaytnEoaAddress: string): Promise<boolean> => {
+	const message = 'Mesher CAP NFT holder';
+	const signature = await signKaikas(klaytnEoaAddress, message);
+	return await validateKaikasSign(message, signature, klaytnEoaAddress);
 };

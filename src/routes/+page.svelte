@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { browser } from '$app/env';
 	import { fly } from 'svelte/transition';
 
-	import type { ApiError, WalletData } from '$root/types/api';
-	import { connectWallet, getWalletInfo, signWallet, validateSign } from '$root/utils/wallet';
+	import type { ApiError } from '$root/types/api';
+	import { connectKaikas, validateKaikas } from '$root/utils/wallet/kaikas';
+	import { connectKlip, getKlipAddress } from '$root/utils/wallet/klip';
+	import { checkBalance } from '$root/utils/wallet/general';
+	import { wrappedAddRole } from '$root/utils/discord/role';
 
+	import QrCode from '$root/components/QrCode.svelte';
+
+	let klipRequestKey: string | null = null;
+	let isKlip: boolean = false;
 	let hasCheckedBalance = false;
 	let hasBalance = false;
 	let hasValidated = false;
@@ -15,11 +22,7 @@
 	let kasPublicNodeError: ApiError | null = null;
 	let roleError: ApiError | null = null;
 
-	let kaikasProvider: any = null;
 	let klaytnEoaAddress: string | null = null;
-
-	const KLAYTN_CAP_NFT_ENTER = import.meta.env.VITE_KLAYTN_CAP_NFT_ENTER;
-	const KLAYTN_CAP_NFT_ENTER_LP = import.meta.env.VITE_KLAYTN_CAP_NFT_ENTER_LP;
 
 	export let data: any; // Discord user data
 
@@ -29,92 +32,68 @@
 	}
 	const discordUserId: string = data.id;
 
-	const resetStatusParam = () => {
-		hasCheckedBalance = false;
-		hasBalance = false;
-		hasValidated = false;
-		hasRefused = false;
-		hasAdded = false;
-
-		kasPublicNodeError = null;
-	};
-
-	const handler = async () => {
-		resetStatusParam();
-
+	const handleKaikas = async () => {
+		// Check browser and provider
+		if (!browser) throw new Error('Browser is not mounted yet');
+		const kaikasProvider = (window as any).klaytn;
 		if (kaikasProvider === null) throw new Error('Kaikas provider is empty');
 
-		try {
-			// Connect to wallet
-			klaytnEoaAddress = await connectWallet(kaikasProvider);
+		// Connect to wallet
+		klaytnEoaAddress = await connectKaikas(kaikasProvider);
 
-			// Get wallet information
-			const walletDataEnter: WalletData | undefined = await getWalletInfo(
-				KLAYTN_CAP_NFT_ENTER,
-				klaytnEoaAddress
-			);
-			const walletDataEnterLp: WalletData | undefined = await getWalletInfo(
-				KLAYTN_CAP_NFT_ENTER_LP,
-				klaytnEoaAddress
-			);
-
-			// Check balance
-			if (walletDataEnter!.balance > 0 || walletDataEnterLp!.balance > 0) hasBalance = true;
-			hasCheckedBalance = true;
-			console.debug('ENTER:', walletDataEnter);
-			console.debug('ENTER LP:', walletDataEnterLp);
-		} catch (err: any) {
-			kasPublicNodeError = {
-				error: err.message,
-				errorDescription:
-					'죄송합니다!<br />현재 이용자가 많아 이용이 불가합니다<br />관리자에게 지갑주소를 알려주시면 처리해 드리겠습니다<br />관리자 연락처 : comverser@mesher.io',
-				code: err.status
-			};
-
-			throw new Error(err.message);
-		}
-
+		// Check balance
+		({ hasBalance, kasPublicNodeError } = await checkBalance(klaytnEoaAddress));
+		hasCheckedBalance = true;
 		if (!hasBalance) return;
 
+		// Validate Kaikas wallet
 		while (!hasValidated) {
 			try {
-				const message = 'Mesher CAP NFT holder';
-				const signature = await signWallet(klaytnEoaAddress, message);
-				hasValidated = await validateSign(message, signature, klaytnEoaAddress);
-				console.debug('hasValidated:', hasValidated);
+				hasValidated = await validateKaikas(klaytnEoaAddress);
 			} catch (err) {
-				console.log(err.message);
 				if (err.message.includes('Kaikas Message Signature: User denied message signature.')) {
 					hasRefused = true;
 					continue;
 				}
-				throw new Error(err.message);
 			}
 		}
 
-		// Check again
-		if (!hasValidated || !hasBalance) return;
-
-		// Add role
-		const dto = { discordUserId, klaytnEoaAddress };
-		const response = await fetch('/role', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(dto)
-		});
-
-		({ roleError } = await response.json());
-
-		if (!roleError) hasAdded = true;
+		// Add role (must be final step)
+		({ hasAdded, roleError } = await wrappedAddRole(
+			hasValidated,
+			hasBalance,
+			discordUserId,
+			klaytnEoaAddress
+		));
 	};
 
-	onMount(async () => {
-		if (discordOauth2Error) throw new Error('Error occurred');
+	const handleKlip = async () => {
+		// Check browser and provider
+		if (!browser) throw new Error('Browser is not mounted yet');
 
-		kaikasProvider = (window as any).klaytn;
+		isKlip = true;
 
-		await handler();
-	});
+		// Connect to wallet
+		klipRequestKey = await connectKlip();
+		if (!klipRequestKey) throw new Error('Klip-SDK is not working propery');
+		klaytnEoaAddress = await getKlipAddress(klipRequestKey);
+
+		// Check balance
+		({ hasBalance, kasPublicNodeError } = await checkBalance(klaytnEoaAddress));
+		hasCheckedBalance = true;
+		if (!hasBalance) return;
+
+		// Skip validation
+		hasValidated = true;
+
+		// Add role (must be final step)
+		({ hasAdded, roleError } = await wrappedAddRole(
+			hasValidated,
+			hasBalance,
+			discordUserId,
+			klaytnEoaAddress
+		));
+	};
 </script>
 
 {#if discordOauth2Error}
@@ -127,14 +106,30 @@
 {/if}
 
 <main>
-	{#if klaytnEoaAddress === null}
+	{#if !klaytnEoaAddress && !isKlip}
 		<div
 			class="container"
 			in:fly={{ y: 150, duration: 200, delay: 200 }}
 			out:fly={{ y: -150, duration: 200 }}
 		>
-			<p>지갑을 먼저 연결해주세요</p>
-			<button on:click={handler} class="btn-highlight">지갑 연결하기</button>
+			<h3>지갑을 연결해주세요</h3>
+			<div class="select">
+				<button on:click={handleKaikas} class="btn-highlight">카이카스 지갑 연결하기</button>
+				<p>또는</p>
+				<button on:click={handleKlip} class="btn-highlight">클립 지갑 연결하기</button>
+			</div>
+		</div>
+	{:else if !klaytnEoaAddress && isKlip}
+		<div
+			class="container"
+			in:fly={{ y: 150, duration: 200, delay: 200 }}
+			out:fly={{ y: -150, duration: 200 }}
+		>
+			<h3>클립 연결하기</h3>
+			{#if klipRequestKey}
+				<QrCode codeValue={`https://klipwallet.com/?target=/a2a?request_key=${klipRequestKey}`} />
+			{/if}
+			<p>5분 내 QR 코드를 스캔해주세요</p>
 		</div>
 	{:else if !hasCheckedBalance}
 		<div
@@ -185,6 +180,7 @@
 			{#if !roleError}
 				<p>홀더 검증을 완료하였습니다</p>
 				<p>메셔 디스코드 서버 권한 향상 중...</p>
+				<p>아직 창을 닫지 말아주세요 (3분 이하 소요)</p>
 			{:else}
 				<p>{roleError.errorDescription}</p>
 			{/if}
@@ -256,5 +252,11 @@
 		background-color: var(--color-bg-secondary);
 
 		text-align: center;
+	}
+
+	.select {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-8);
 	}
 </style>
