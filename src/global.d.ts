@@ -1,4 +1,7 @@
 interface ImportMetaEnv {
+	VITE_ACCESS_KEY_ID: string;
+	VITE_SECRET_ACCESS_KEY: string;
+
 	VITE_MESHER_TOKEN: string;
 	VITE_DISCORD_ROLE_ADD_EP: string;
 
@@ -8,4 +11,6 @@ interface ImportMetaEnv {
 	VITE_DISCORD_REDIRECT_URI: string;
 	VITE_DISCORD_CLIENT_ID: string;
 	VITE_DISCORD_CLIENT_SECRET: string;
+
+	DATABASE_URL: string;
 }
