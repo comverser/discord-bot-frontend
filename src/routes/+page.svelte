@@ -5,6 +5,7 @@
 	import type { ApiError } from '$root/types/api';
 	import { connectKaikas, validateKaikas } from '$root/utils/wallet/kaikas';
 	import { connectKlip, getKlipAddress } from '$root/utils/wallet/klip';
+	import { connectMetamask } from '$root/utils/wallet/metamask';
 	import { checkBalance } from '$root/utils/wallet/general';
 	import { wrappedAddRole } from '$root/utils/discord/role';
 
@@ -94,6 +95,32 @@
 			klaytnEoaAddress
 		));
 	};
+
+	const handleMetamask = async () => {
+		// Check browser and provider
+		if (!browser) throw new Error('Browser is not mounted yet');
+		const metamaskProvider = (window as any).ethereum;
+		if (metamaskProvider === null) throw new Error('Kaikas provider is empty');
+
+		// Connect to wallet
+		klaytnEoaAddress = await connectMetamask(metamaskProvider);
+
+		// Check balance
+		({ hasBalance, kasPublicNodeError } = await checkBalance(klaytnEoaAddress));
+		hasCheckedBalance = true;
+		if (!hasBalance) return;
+
+		// Skip validation
+		hasValidated = true;
+
+		// Add role (must be final step)
+		({ hasAdded, roleError } = await wrappedAddRole(
+			hasValidated,
+			hasBalance,
+			discordUserId,
+			klaytnEoaAddress
+		));
+	};
 </script>
 
 {#if discordOauth2Error}
@@ -114,9 +141,13 @@
 		>
 			<h3>지갑을 연결해주세요</h3>
 			<div class="select">
-				<button on:click={handleKaikas} class="btn-highlight">카이카스 지갑 연결하기</button>
-				<p>또는</p>
-				<button on:click={handleKlip} class="btn-highlight">클립 지갑 연결하기</button>
+				<button on:click={handleKaikas} class="btn-highlight"
+					><img src="/kaikas.svg" alt="" /></button
+				>
+				<button on:click={handleKlip} class="btn-highlight"><img src="klip.svg" alt="" /></button>
+				<button on:click={handleMetamask} class="btn-highlight"
+					><img src="/metamask.svg" alt="" /></button
+				>
 			</div>
 		</div>
 	{:else if !klaytnEoaAddress && isKlip}
@@ -149,7 +180,7 @@
 			{#if kasPublicNodeError}
 				<p>{@html kasPublicNodeError.errorDescription}</p>
 			{:else}
-				<p>알맞은 지갑을 연결하셨나요?</p>
+				<p>알맞은 지갑 및 계정을 연결하셨나요?</p>
 				<p>처음부터 다시 시도해주세요</p>
 			{/if}
 		</div>
@@ -258,5 +289,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-8);
+	}
+	button {
+		display: flex;
+	}
+	img {
+		width: 200px;
+		height: 40px;
 	}
 </style>
