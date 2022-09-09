@@ -209,9 +209,7 @@
 			out:fly={{ y: -150, duration: 200 }}
 		>
 			{#if !roleError}
-				<p>홀더 검증을 완료하였습니다</p>
 				<p>메셔 디스코드 서버 권한 향상 중...</p>
-				<p>아직 창을 닫지 말아주세요</p>
 			{:else}
 				<p>{roleError.errorDescription}</p>
 			{/if}
