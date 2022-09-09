@@ -82,22 +82,26 @@ body {
 	padding: var(--spacing-16) var(--spacing-32);
 	font-size: var(--font-18);
 	font-weight: bold;
-	color: var(--color-text-highlight);
+	/* color: var(--color-text-highlight); */
 	background-color: var(--color-btn-highlight);
 	border-radius: var(--radius-btn);
-	border: none;
+	border: 1px solid transparent;
 	cursor: pointer;
 }
 
-.btn:hover {
-	background-color: var(--color-btn-primary-active-hover);
+.btn-highlight:hover {
+	border: 1px solid var(--color-bg-primary);
 }
 
-.btn:disabled {
+/* .btn:hover {
+	background-color: var(--color-btn-primary-active-hover);
+} */
+
+/* .btn:disabled {
 	color: var(--color-text-muted);
 	background-color: var(--color-btn-primary-inactive);
 	cursor: not-allowed;
-}
+} */
 
 /* ul,
 ol {
