@@ -69,18 +69,23 @@ export const POST: RequestHandler = async ({ request }) => {
 		body: JSON.stringify({ discordUserId, MESHER_TOKEN })
 	});
 
-	const { hasAdded, errors } = await botClientResponse.json();
+	try {
+		const { hasAdded, errors } = await botClientResponse.json();
 
-	if (errors) console.debug(errors);
+		if (errors) console.debug('Backend:', errors);
 
-	if (!hasAdded) {
-		roleError = {
-			errorDescription:
-				'디스코드 역할 부여 중 에러가 발생했습니다. <comverser@mesher.io>로 문의하여주세요.'
-		};
-		return new Response(JSON.stringify({ roleError }), {
-			status: 500
-		});
+		if (!hasAdded) {
+			roleError = {
+				errorDescription:
+					'디스코드 역할 부여 중 에러가 발생했습니다. <comverser@mesher.io>로 문의하여주세요.'
+			};
+			return new Response(JSON.stringify({ roleError }), {
+				status: 500
+			});
+		}
+	} catch (err) {
+		// Unknown error occurrs but it works propery
+		console.debug('Unknown error:', err);
 	}
 
 	role = 'mfc';

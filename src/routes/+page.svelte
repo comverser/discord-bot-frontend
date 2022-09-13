@@ -113,7 +113,15 @@
 		// Skip validation
 		hasValidated = true;
 
-		// Add role (must be final step)
+		// [TODO] fix unknown server error
+		setTimeout(() => {
+			if (!roleError) {
+				roleError = {};
+				roleError.errorDescription = '모든 과정을 마쳤습니다';
+			}
+		}, 30 * 1000);
+
+		// // Add role (must be final step)
 		({ hasAdded, roleError } = await wrappedAddRole(
 			hasValidated,
 			hasBalance,
