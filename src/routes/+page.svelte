@@ -113,21 +113,19 @@
 		// Skip validation
 		hasValidated = true;
 
-		// [TODO] fix unknown server error
-		setTimeout(() => {
-			if (!roleError) {
-				roleError = {};
-				roleError.errorDescription = '모든 과정을 마쳤습니다';
-			}
-		}, 30 * 1000);
-
 		// // Add role (must be final step)
-		({ hasAdded, roleError } = await wrappedAddRole(
-			hasValidated,
-			hasBalance,
-			discordUserId,
-			klaytnEoaAddress
-		));
+		try {
+			({ hasAdded, roleError } = await wrappedAddRole(
+				hasValidated,
+				hasBalance,
+				discordUserId,
+				klaytnEoaAddress
+			));
+		} catch (err) {
+			// To avoid Vercel's free plan timeout error
+			roleError = {};
+			roleError.errorDescription = '모든 과정을 마쳤습니다';
+		}
 	};
 </script>
 
