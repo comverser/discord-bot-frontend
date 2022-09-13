@@ -13,19 +13,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	let roleError: ApiError | null = null;
 	let role = 'member';
 
-	const roleAdded = async () => {
-		role = 'mfc';
-
-		await prisma.discord_user.update({
-			where: { klaytnEoaAddress },
-			data: { role }
-		});
-
-		return new Response(JSON.stringify({ roleError }), {
-			status: 200
-		});
-	};
-
 	const userByKlaytnEoaAddress = await prisma.discord_user.findUnique({
 		where: { klaytnEoaAddress }
 	});
@@ -75,40 +62,44 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 	}
 
-	try {
-		const VERCEL_TIMEOUT_LIMIT = 5000;
-		const timeoutId = setTimeout(async () => {
-			await roleAdded();
-		}, VERCEL_TIMEOUT_LIMIT);
+	// Add new role of Discord
 
-		// Add new role of Discord
-		const botClientResponse = await fetch(DISCORD_ROLE_ADD_EP, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ discordUserId, MESHER_TOKEN })
+	// Avoid Vercel's free plan timeout error
+	fetch(DISCORD_ROLE_ADD_EP, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ discordUserId, MESHER_TOKEN })
+	});
+	const hasAdded = true;
+
+	/*
+	const botClientResponse = await fetch(DISCORD_ROLE_ADD_EP, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ discordUserId, MESHER_TOKEN })
+	});
+
+	const { hasAdded, errors } = await botClientResponse.json();
+
+	if (!hasAdded) {
+		roleError = {
+			errorDescription:
+				'디스코드 역할 부여 중 에러가 발생했습니다. <comverser@mesher.io>로 문의하여주세요.'
+		};
+		return new Response(JSON.stringify({ roleError }), {
+			status: 500
 		});
-
-		clearTimeout(timeoutId);
-
-		const { hasAdded, errors } = await botClientResponse.json();
-
-		if (errors) console.debug('Backend:', errors);
-
-		if (!hasAdded) {
-			roleError = {
-				errorDescription:
-					'디스코드 역할 부여 중 에러가 발생했습니다. <comverser@mesher.io>로 문의하여주세요.'
-			};
-			return new Response(JSON.stringify({ roleError }), {
-				status: 500
-			});
-		}
-	} catch (err) {
-		// Timeout error of Vercel occurrs but it works propery
-		// e.g.Task timed out after 10.02 seconds
-		// 504 error header info => x-vercel-error: FUNCTION_INVOCATION_TIMEOUT
-		console.debug('Timeout error:', err);
 	}
+	*/
 
-	await roleAdded();
+	role = 'mfc';
+
+	await prisma.discord_user.update({
+		where: { klaytnEoaAddress },
+		data: { role }
+	});
+
+	return new Response(JSON.stringify({ roleError }), {
+		status: 200
+	});
 };

@@ -113,19 +113,13 @@
 		// Skip validation
 		hasValidated = true;
 
-		// // Add role (must be final step)
-		try {
-			({ hasAdded, roleError } = await wrappedAddRole(
-				hasValidated,
-				hasBalance,
-				discordUserId,
-				klaytnEoaAddress
-			));
-		} catch (err) {
-			// To avoid Vercel's free plan timeout error
-			roleError = {};
-			roleError.errorDescription = '모든 과정을 마쳤습니다';
-		}
+		// Add role (must be final step)
+		({ hasAdded, roleError } = await wrappedAddRole(
+			hasValidated,
+			hasBalance,
+			discordUserId,
+			klaytnEoaAddress
+		));
 	};
 </script>
 
