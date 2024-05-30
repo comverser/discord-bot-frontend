@@ -64,6 +64,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	// Add new role of Discord
 
+	/*
 	// Avoid Vercel's free plan timeout error
 	fetch(DISCORD_ROLE_ADD_EP, {
 		method: 'POST',
@@ -71,8 +72,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		body: JSON.stringify({ discordUserId, MESHER_TOKEN })
 	});
 	const hasAdded = true;
+	*/
 
-	/*
 	const botClientResponse = await fetch(DISCORD_ROLE_ADD_EP, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -84,13 +85,12 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!hasAdded) {
 		roleError = {
 			errorDescription:
-				'디스코드 역할 부여 중 에러가 발생했습니다. <comverser@mesher.io>로 문의하여주세요.'
+				`디스코드 역할 부여 중 에러가 발생했습니다. ${errors}`
 		};
 		return new Response(JSON.stringify({ roleError }), {
 			status: 500
 		});
 	}
-	*/
 
 	role = 'mfc';
 
