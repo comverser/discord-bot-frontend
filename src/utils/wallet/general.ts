@@ -50,7 +50,7 @@ export const checkBalance = async (klaytnEoaAddress: string): Promise<CheckBalan
 		kasPublicNodeError = {
 			error: err.message,
 			errorDescription:
-				'죄송합니다!<br />현재 이용자가 많아 이용이 불가합니다<br />관리자에게 지갑주소를 알려주시면 처리해 드리겠습니다<br />관리자 연락처 : comverser@mesher.io',
+				`죄송합니다!<br />현재 이용자가 많아 이용이 불가합니다<br />관리자에게 지갑주소를 알려주시면 처리해 드리겠습니다<br />(${err.status}: ${err.message})`,
 			code: err.status
 		};
 	}
