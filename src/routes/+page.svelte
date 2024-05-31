@@ -231,7 +231,6 @@
 		>
 			<p>에러가 발생하였습니다</p>
 			<p>관리자에게 문의하여 주세요</p>
-			<p>관리자 연락처 : comverser@mesher.io</p>
 		</div>
 	{/if}
 </main>
