@@ -85,7 +85,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!hasAdded) {
 		roleError = {
 			errorDescription:
-				`디스코드 역할 부여 중 에러가 발생했습니다. ${errors}`
+				`디스코드 역할 부여 중 에러가 발생했습니다. (Error: ${errors.message})`
 		};
 		return new Response(JSON.stringify({ roleError }), {
 			status: 500
